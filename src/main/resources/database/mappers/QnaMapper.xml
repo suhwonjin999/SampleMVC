@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.iu.main.board.qna.QnaDAO">
+  <select id="getTotal" parameterType="com.iu.main.util.Pager" resultType="Long">
+  		SELECT COUNT(NUM) FROM QNA
+  		WHERE NUM>0 
+			<choose>
+				<when test="kind == 'title'">
+				AND	TITLE LIKE '%'||#{search}||'%'
+				</when>
+				<when test="kind == 'writer'">
+				AND	WRITER LIKE '%'||#{search}||'%'
+				</when>
+				<otherwise>
+				AND	CONTENTS LIKE '%'||#{search}||'%'
+			 	</otherwise>
+			</choose>
+  	</select>
+<select id="getList" parameterType="com.iu.main.util.Pager" resultType="QnaDTO">
+  	SELECT * FROM 
+  	(SELECT ROWNUM R,B.* FROM
+		(
+			SELECT * FROM QNA
+			WHERE NUM>0
+			<choose>
+				<when test="kind == 'title'">
+				AND	TITLE LIKE '%'||#{search}||'%'
+				</when>
+				<when test="kind == 'writer'">
+				AND	WRITER LIKE '%'||#{search}||'%'
+				</when>
+				<otherwise>
+				AND	CONTENTS LIKE '%'||#{search}||'%'
+			 	</otherwise>
+			</choose>
+			ORDER BY REF DESC, STEP ASC
+		) B
+	)
+	WHERE R BETWEEN #{startRow} AND #{lastRow} 
+  	</select>
+  
+  
+  <insert id="setAdd" parameterType="BoardDTO">	
+  		<selectKey keyProperty="num" resultType="Long" order="BEFORE">
+  		SELECT QNA_SEQ.NEXTVAL FROM DUAL
+  		</selectKey>
+  		
+  		INSERT INTO QNA
+  		VALUES (#{num},#{title},#{writer},SYSDATE,0,#{contents},#{num},0,0)
+  </insert>
+  
+  <insert id="setFileAdd" parameterType="QnaFileDTO">
+  			<selectKey keyProperty="fileNum" order="BEFORE" resultType="Long">
+  			SELECT QNA_SEQ.NEXTVAL FROM DUAL
+  			</selectKey>
+  		INSERT INTO QNAFILE
+  		VALUES (#{fileNum},#{num}, #{fileName}, #{originalName} )
+  	</insert>
+  <select id="getDetail" resultType="QnaDTO" parameterType="BoardDTO">	
+  	SELECT * FROM QNA WHERE NUM=#{num}
+  	</select>
+  
+  
+  <insert id="setReplyAdd" parameterType="QnaDTO">
+  		<selectKey keyProperty="num" resultType="Long" order="BEFORE">
+  		SELECT QNA_SEQ.NEXTVAL FROM DUAL
+  		</selectKey>
+  			INSERT INTO QNA (NUM,TITLE,WRITER,CREATEDATE,HIT,CONTENTS,REF,STEP,DEPTH)
+  			VALUES (#{num},#{title},#{writer},SYSDATE,0,#{contents},#{ref},#{step},#{depth})
+  </insert>
+  
+  <update id="setStepUpdate" parameterType="QnaDTO">
+  		UPDATE QNA SET STEP=STEP+1
+ 		WHERE REF=#{ref} AND STEP>#{step}
+  </update>
+  <update id="setUpdate" parameterType="QnaDTO">
+  		UPDATE QNA SET
+  		TITLE=#{title},
+  		CONTENTS=#{contents}
+  		WHERE NUM=#{num}
+  	</update>
+  
+  <delete id="setDelete" parameterType="Long">
+  		DELETE QNA WHERE NUM=${num}
+  	</delete>
+  
+  
+  
+  
+  
+  
+  </mapper>
+  
+  

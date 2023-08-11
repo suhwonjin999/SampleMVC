@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.iu.main.bankbook.bookAccount.BookAccountDAO">
+
+	<select id="getTotal" resultType="Long">
+		SELECT COUNT(ACCOUNTNUM) FROM BOOKACCOUNT
+	</select>
+  
+  	
+  	<!-- List -->
+  	<select id="getList" resultType="BookAccountDTO" parameterType="Map">
+  	<!-- 여기서 꺼내는게 ACCOUNTPASSWORD같은 것이었다면 가져올 파라미터의 타입으로 BookAccountDTO를
+  		 써야겠지만 id를 꺼내는 것이기 때문에 MemberDTO에서 바로 꺼내오는 것이 효율적이다.
+  		 (BookAccountDTO에서 가져오려면 어찌됐든 한 번 다리를 거쳐야 가져올 수 있기 때문에) -->
+	  	SELECT * FROM
+	  	(SELECT ROWNUM R,A.* FROM
+	  	(SELECT * FROM BOOKACCOUNT 
+	  	 WHERE ID=#{member.id}
+	  	 ORDER BY ACCOUNTDATE DESC) A)
+	  	 WHERE R BETWEEN #{pager.startRow} AND #{pager.lastRow}
+    </select>
+    
+  	<!-- Add -->
+  	<insert id="setAdd" parameterType="BookAccountDTO">
+  		INSERT INTO BOOKACCOUNT
+  		VALUES (ACCOUNTNUM_SEQ.NEXTVAL, #{id}, #{bookNum}, #{account}, #{accountPassword}, #{accountBalance}, SYSDATE)
+  	</insert>
+   </mapper> 

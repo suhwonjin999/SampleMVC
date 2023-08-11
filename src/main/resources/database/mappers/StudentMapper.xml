@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.iu.main.student.StudentDAO">
+  
+  	
+  
+  	<select id="getStudentList" resultType="com.iu.main.student.StudentDTO">
+  	 	SELECT * FROM STUDENT ORDER BY NUM ASC
+  	</select>
+  	<select id="getStudentDetail" resultType="com.iu.main.student.StudentDTO" parameterType="com.iu.main.student.StudentDTO">
+  		SELECT * FROM STUDENT WHERE NUM=#{num}
+  	</select>
+  	
+  	<insert id="setStudentAdd" parameterType="com.iu.main.student.StudentDTO">
+  		INSERT INTO STUDENT
+  		VALUES (STUDENT_SEQ.NEXTVAL,#{name},#{phone},#{kor},#{eng},#{math})
+  	</insert>
+  <update id="setStudentUpdate" parameterType="com.iu.main.student.StudentDTO">
+  		UPDATE STUDENT SET
+  		NAME=#{name},
+  		PHONE=#{phone},
+  		KOR=#{kor},
+  		ENG=#{eng},
+  		MATH=#{math}
+  		WHERE NUM=#{num}
+  	</update>
+  <delete id="setStudentDelete" parameterType="java.lang.Long">
+  		DELETE STUDENT WHERE NUM=${num}
+  	</delete>
+  </mapper>

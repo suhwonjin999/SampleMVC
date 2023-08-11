@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.iu.main.bankbook.BankBookDAO">
+  
+  <!-- 댓글관련 -->
+  <select id="getCommentTotal" resultType="Long" parameterType="CommentDTO">
+  	SELECT COUNT(NUM) FROM BOOKCOMMENT
+  	WHERE BOOKNUM = #{bookNum}
+  </select>
+  <select id="getCommentList" resultType="CommentDTO" parameterType="Map">
+ 	SELECT * FROM 
+  		(SELECT ROWNUM R, C.* FROM
+  		(SELECT * FROM BOOKCOMMENT
+  		 WHERE BOOKNUM=#{comment.bookNum} 	
+  		 ORDER BY NUM DESC)C)
+  		WHERE R BETWEEN #{pager.startRow} AND #{pager.lastRow}
+  </select>
+  
+  <insert id="setCommentAdd" parameterType="CommentDTO">
+  	INSERT INTO BOOKCOMMENT
+  	(NUM,ID,BOOKNUM,COMMENTCONTENTS,COMMENTDATE)
+  	VALUES
+  	(COMMENT_SEQ.NEXTVAL,#{id},#{bookNum},#{commentContents},SYSDATE)
+  	
+  </insert>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <!-- 뱅크북 관련 -->
+  	<select id="getTotal" parameterType="com.iu.main.util.Pager" resultType="Long">
+  		SELECT COUNT(BOOKNUM) FROM BANKBOOK
+  		WHERE BOOKNUM>0 
+			<choose>
+				<when test="kind == 'name'">
+				AND	BOOKNAME LIKE '%'||#{search}||'%'
+				</when>
+				<otherwise>
+				AND	BOOKCONTENTS LIKE '%'||#{search}||'%'
+			 	</otherwise>
+			</choose>
+  	</select>
+  
+  	<select id="getList" parameterType="com.iu.main.util.Pager" resultType="BankBookDTO">
+  	SELECT 	BOOKNUM,BOOKNAME,BOOKRATE,BOOKCONTENTS FROM 
+	(SELECT ROWNUM R,B.* FROM
+		(
+			SELECT * FROM BANKBOOK
+			WHERE BOOKNUM>0 
+				<choose>
+					<when test="kind == 'name'">
+					AND	BOOKNAME LIKE '%'||#{search}||'%'
+					</when>
+					<otherwise>
+					AND	BOOKCONTENTS LIKE '%'||#{search}||'%'
+					</otherwise>
+				</choose>
+			
+			<!-- <if test="kind == 'name'">
+			AND	BOOKNAME LIKE '%검색어%'
+			</if> 
+			<if test="kind == 'contents'">
+			AND	BOOKCONTENTS LIKE '%검색어%'
+			</if> -->
+			ORDER BY BOOKNUM DESC
+		) B
+	)
+	WHERE R BETWEEN #{startRow} AND #{lastRow} 
+  	</select>
+  	<select id="getDetail" resultMap="getDetailResult" parameterType="BankBookDTO">	
+  	SELECT B.*, BF.* 
+		FROM BANKBOOK B
+			 LEFT JOIN
+			 BANKFILE BF
+			 ON(B.BOOKNUM=BF.BOOKNUM)
+		WHERE B.BOOKNUM=#{bookNum}
+  	</select>
+  	
+  	<resultMap type="BankBookDTO" id="getDetailResult">
+		<id column="BOOKNUM" property="bookNum"/>
+		<result column="BOOKNAME" property="bookName"/>
+		<result column="BOOKCONTENTS" property="bookContents"/>
+		<result column="BOOKRATE" property="bookRate"/>
+		<result column="BOOKSALE" property="bookSale"/>
+		<collection property="fileDTOs" javaType="List" ofType="BankBookFileDTO">
+			<id column="FILENUM" property="fileNum"/>
+			<result column="FILENAME" property="fileName"/>
+			<result column="ORIGINALNAME" property="originalName"/>
+		</collection>
+	</resultMap>
+	
+	
+  	<select id="getSequence" resultType="Long">
+		SELECT BANK_SEQ.NEXTVAL FROM DUAL
+	</select>
+  	
+  	<insert id="setAdd" parameterType="BankBookDTO">
+  		<selectKey keyProperty="bookNum" resultType="Long" order="BEFORE">
+			SELECT BANK_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO BANKBOOK 
+		VALUES (#{bookNum}, #{bookName},#{bookRate},#{bookSale},#{bookContents})
+  	</insert>
+  	
+  	
+  	<insert id="setFileAdd" parameterType="BankBookFileDTO">
+		INSERT INTO BANKFILE (FILENUM,BOOKNUM, FILENAME, ORIGINALNAME)
+		VALUES (BANK_SEQ.NEXTVAL, #{bookNum}, #{fileName}, #{originalName})
+	</insert>
+	
+  	
+  	<delete id="setDelete" parameterType="Long">
+  		DELETE BANKBOOK WHERE BOOKNUM=#{bookNum}
+  	</delete>
+  	
+  	
+  	
+  	<update id="setUpdate" parameterType="BankBookDTO">
+  		UPDATE BANKBOOK SET
+  		BOOKNAME=#{bookName},
+  		BOOKRATE=#{bookRate},
+  		BOOKSALE=#{bookSale},
+  		BOOKCONTENTS=#{bookContents}
+  		WHERE BOOKNUM=#{bookNum}
+  	</update>
+  	
+  </mapper>

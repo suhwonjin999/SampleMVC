@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.iu.main.board.notice.NoticeDAO">
+  	<select id="getTotal" parameterType="com.iu.main.util.Pager" resultType="Long">
+  		SELECT COUNT(NUM) FROM NOTICE
+  		WHERE NUM>0 
+			<choose>
+				<when test="kind == 'title'">
+				AND	TITLE LIKE '%'||#{search}||'%'
+				</when>
+				<when test="kind == 'writer'">
+				AND	WRITER LIKE '%'||#{search}||'%'
+				</when>
+				<otherwise>
+				AND	CONTENTS LIKE '%'||#{search}||'%'
+			 	</otherwise>
+			</choose>
+  	</select>
+  
+  	<select id="getList" parameterType="com.iu.main.util.Pager" resultMap="getSelectResult">
+  	SELECT NUM,TITLE,WRITER,CREATEDATE,HIT FROM 
+  	(SELECT ROWNUM R,B.* FROM
+		(
+			SELECT * FROM NOTICE
+			WHERE NUM>0
+			<choose>
+				<when test="kind == 'title'">
+				AND	TITLE LIKE '%'||#{search}||'%'
+				</when>
+				<when test="kind == 'writer'">
+				AND	WRITER LIKE '%'||#{search}||'%'
+				</when>
+				<otherwise>
+				AND	CONTENTS LIKE '%'||#{search}||'%'
+			 	</otherwise>
+			</choose>
+			ORDER BY NUM DESC
+		) B
+	)
+	WHERE R BETWEEN #{startRow} AND #{lastRow} 
+  	</select>
+  	<resultMap type="NoticeDTO" id="getSelectResult">
+  		<id column="NUM" property="num"/>
+  		<result column="TITLE" property="title"/>
+  		<result column="WRITER" property="writer"/>
+  		<result column="CONTENTS" property="contents"/>
+  		<result column="CREATEDATE" property="createDate"/>
+  		<result column="HIT" property="hit"/>
+  		<collection property="dtos" javaType="List" ofType="NoticeFileDTO">
+  			<id column="FILENUM" property="fileNum"/>
+  			<result column="FILENAME" property="fileName"/>
+  			<result column="ORIGINALNAME" property="originalName"/>
+  		</collection>
+  		
+  	</resultMap>
+ 
+  	
+  	<select id="getDetail" resultMap="getSelectResult" parameterType="NoticeDTO">  
+  		SELECT 
+  			* 
+  		FROM
+  			NOTICE N
+  			LEFT JOIN
+  			NOTICEFILE NF
+  			ON N.NUM=NF.NUM
+  		WHERE
+  			N.NUM=#{num}
+  	</select>
+  	
+  	<insert id="setAdd" parameterType="NoticeDTO">
+  			<selectKey keyProperty="num" order="BEFORE" resultType="Long">
+  			SELECT NOTICE_SEQ.NEXTVAL FROM DUAL
+  			</selectKey>
+  		INSERT INTO NOTICE
+  		VALUES (#{num},#{title},#{writer},SYSDATE,0,#{contents})
+  	</insert>
+  	<insert id="setFileAdd" parameterType="NoticeFileDTO">
+  			<selectKey keyProperty="fileNum" order="BEFORE" resultType="Long">
+  			SELECT NOTICEFILE_SEQ.NEXTVAL FROM DUAL
+  			</selectKey>
+  		INSERT INTO NOTICEFILE
+  		VALUES (#{fileNum},#{num}, #{fileName}, #{originalName} )
+  	</insert>
+  	<update id="setUpdate" parameterType="NoticeDTO">
+  		UPDATE NOTICE SET
+  		TITLE=#{title},
+  		CONTENTS=#{contents}
+  		WHERE NUM=#{num}
+  	</update>
+  	<delete id="setDelete" parameterType="NoticeDTO">
+  		DELETE NOTICE WHERE NUM=#{num}
+  	</delete>
+  	<update id="setHitCount">
+		UPDATE
+			NOTICE
+		SET
+			HIT = HIT + 1
+		WHERE
+			NUM = #{num}
+	</update>
+  	
+  	<delete id="setFileDelete" parameterType="NoticeFileDTO">
+  		DELETE NOTICEFILE WHERE FILENUM=#{fileNum}
+  	</delete>
+  	
+  	<select id="getFileDetail" parameterType="NoticeFileDTO" resultType="NoticeFileDTO">
+  			SELECT FILENUM,FILENAME FROM NOTICEFILE WHERE FILENUM=#{fileNum}
+  	</select>
+  	
+  	
+  	
+  </mapper>
